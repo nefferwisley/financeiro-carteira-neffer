@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Carteira — Controle Financeiro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root{
+    --ink:#132622;
+    --paper:#F6F3EC;
+    --card:#FFFFFF;
+    --teal:#1F4B44;
+    --teal-deep:#0E2E29;
+    --gold:#C79A3D;
+    --coral:#B4552E;
+    --line:#E3DFD3;
+    --muted:#6B7A76;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:100px;
+  }
+  .display{font-family:'Fraunces',serif;}
+  header{
+    background:var(--teal-deep);
+    color:#F6F3EC;
+    padding:28px 20px 40px;
+    border-radius:0 0 28px 28px;
+    position:relative;
+    overflow:hidden;
+  }
+  header::after{
+    content:"";
+    position:absolute;
+    right:-40px; top:-40px;
+    width:160px; height:160px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(199,154,61,0.25), transparent 70%);
+  }
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:#B9CFC9;
+    margin:0 0 6px;
+  }
+  .saldo{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:38px;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .saldo small{font-size:18px; font-weight:500; opacity:0.7;}
+  .subrow{
+    display:flex;
+    gap:18px;
+    margin-top:18px;
+    font-size:13px;
+  }
+  .subrow div{display:flex; align-items:center; gap:6px;}
+  .dot{width:8px; height:8px; border-radius:50%;}
+  .dot.in{background:#7FB88F;}
+  .dot.out{background:#E39A76;}
+
+  .header-actions{display:flex; gap:6px; margin-top:16px;}
+  .ghost-btn{
+    flex:1;
+    background:rgba(246,243,236,0.1);
+    border:1px solid rgba(246,243,236,0.25);
+    color:#F6F3EC;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:11.5px;
+    padding:9px 6px;
+    border-radius:10px;
+    cursor:pointer;
+  }
+
+  .scan-preview{
+    width:100%;
+    max-height:220px;
+    object-fit:contain;
+    border-radius:12px;
+    margin-bottom:12px;
+    background:var(--paper);
+  }
+  .scan-progress{
+    text-align:center;
+    padding:24px 0;
+    color:var(--muted);
+    font-size:13.5px;
+  }
+  .scan-progress .spin{
+    width:28px; height:28px;
+    border:3px solid var(--line);
+    border-top-color:var(--teal);
+    border-radius:50%;
+    margin:0 auto 12px;
+    animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .found-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:#E7F3EA;
+    color:#3F7A56;
+    font-size:12px;
+    font-weight:600;
+    padding:5px 10px;
+    border-radius:999px;
+    margin-bottom:12px;
+  }
+  .scan-file-btn{
+    display:block;
+    width:100%;
+    text-align:center;
+    padding:32px 16px;
+    border:1.5px dashed var(--line);
+    border-radius:14px;
+    color:var(--muted);
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    background:var(--paper);
+  }
+  .scan-file-btn input{display:none;}
+
+  textarea{
+    width:100%;
+    padding:12px 14px;
+    border-radius:11px;
+    border:1.5px solid var(--line);
+    font-family:'Inter',sans-serif;
+    font-size:13.5px;
+    background:var(--paper);
+    color:var(--ink);
+    resize:vertical;
+    min-height:120px;
+    line-height:1.5;
+  }
+  .import-hint{
+    font-size:12.5px;
+    color:var(--muted);
+    line-height:1.6;
+    background:var(--paper);
+    border-radius:10px;
+    padding:12px 14px;
+    margin-bottom:4px;
+  }
+  .import-hint code{
+    background:#fff;
+    padding:1px 5px;
+    border-radius:4px;
+    font-size:12px;
+  }
+  .import-preview{
+    margin-top:14px;
+    font-size:13px;
+  }
+  .import-preview .row{
+    display:flex; justify-content:space-between;
+    padding:8px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .import-status{
+    font-size:12.5px;
+    margin-top:10px;
+    color:var(--muted);
+  }
+
+  main{padding:0 20px; max-width:520px; margin:0 auto;}
+
+  .section-title{
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--muted);
+    margin:28px 0 12px;
+    font-weight:600;
+  }
+
+  .card{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:18px;
+    box-shadow:0 1px 2px rgba(19,38,34,0.06);
+    border:1px solid var(--line);
+  }
+
+  #chartWrap{position:relative; height:220px;}
+  #emptyChart{
+    display:none;
+    text-align:center;
+    color:var(--muted);
+    font-size:14px;
+    padding:40px 0;
+  }
+
+  .cat-legend{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px;}
+  .cat-chip{
+    display:flex; align-items:center; gap:6px;
+    font-size:12px;
+    padding:5px 10px;
+    border-radius:999px;
+    background:var(--paper);
+    border:1px solid var(--line);
+  }
+  .cat-chip .sw{width:8px; height:8px; border-radius:50%;}
+
+  .tx-list{display:flex; flex-direction:column; gap:1px;}
+  .tx{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 4px;
+    border-bottom:1px solid var(--line);
+  }
+  .tx:last-child{border-bottom:none;}
+  .tx-left{display:flex; align-items:center; gap:12px;}
+  .tx-icon{
+    width:38px; height:38px;
+    border-radius:11px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px;
+    flex-shrink:0;
+  }
+  .tx-desc{font-size:14.5px; font-weight:600; color:var(--ink);}
+  .tx-meta{font-size:12px; color:var(--muted); margin-top:2px;}
+  .tx-val{font-size:14.5px; font-weight:700; white-space:nowrap;}
+  .tx-val.in{color:#3F7A56;}
+  .tx-val.out{color:var(--coral);}
+  .tx-del{
+    background:none; border:none; color:var(--muted);
+    font-size:18px; padding:4px 8px; cursor:pointer; opacity:0.5;
+  }
+  .tx-row{display:flex; align-items:center; gap:8px; width:100%;}
+
+  .empty-state{
+    text-align:center;
+    padding:36px 12px;
+    color:var(--muted);
+    font-size:14px;
+  }
+
+  .fab{
+    position:fixed;
+    bottom:24px; left:50%;
+    transform:translateX(-50%);
+    background:var(--teal);
+    color:#fff;
+    border:none;
+    border-radius:999px;
+    padding:15px 28px;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:15px;
+    display:flex; align-items:center; gap:8px;
+    box-shadow:0 8px 24px rgba(14,46,41,0.35);
+    cursor:pointer;
+  }
+  .fab:active{transform:translateX(-50%) scale(0.97);}
+
+  .sheet-overlay{
+    position:fixed; inset:0;
+    background:rgba(14,46,41,0.4);
+    display:none;
+    z-index:50;
+  }
+  .sheet-overlay.open{display:block;}
+  .sheet{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    background:var(--card);
+    border-radius:24px 24px 0 0;
+    padding:22px 20px calc(22px + env(safe-area-inset-bottom));
+    transform:translateY(100%);
+    transition:transform 0.25s ease;
+    z-index:51;
+    max-height:88vh;
+    overflow-y:auto;
+  }
+  .sheet.open{transform:translateY(0);}
+  .sheet h2{font-family:'Fraunces',serif; font-size:22px; margin:0 0 18px; font-weight:600;}
+
+  .toggle-group{display:flex; gap:8px; margin-bottom:16px;}
+  .toggle-btn{
+    flex:1;
+    padding:11px;
+    border-radius:11px;
+    border:1.5px solid var(--line);
+    background:var(--paper);
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    color:var(--muted);
+    cursor:pointer;
+  }
+  .toggle-btn.active.despesa{background:#FBEBE2; border-color:var(--coral); color:var(--coral);}
+  .toggle-btn.active.receita{background:#E7F3EA; border-color:#3F7A56; color:#3F7A56;}
+
+  label{
+    display:block;
+    font-size:12px;
+    font-weight:600;
+    color:var(--muted);
+    margin:14px 0 6px;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+  }
+  input[type=text], input[type=number], input[type=date], select{
+    width:100%;
+    padding:12px 14px;
+    border-radius:11px;
+    border:1.5px solid var(--line);
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    background:var(--paper);
+    color:var(--ink);
+  }
+  input:focus, select:focus{outline:2px solid var(--teal); outline-offset:1px;}
+
+  .cat-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+  .cat-opt{
+    border:1.5px solid var(--line);
+    border-radius:12px;
+    padding:10px 4px;
+    text-align:center;
+    font-size:11.5px;
+    font-weight:600;
+    background:var(--paper);
+    cursor:pointer;
+    color:var(--ink);
+  }
+  .cat-opt .em{display:block; font-size:18px; margin-bottom:3px;}
+  .cat-opt.active{border-color:var(--teal); background:#E7EFED; color:var(--teal-deep);}
+
+  .save-btn{
+    width:100%;
+    margin-top:20px;
+    padding:15px;
+    border:none;
+    border-radius:12px;
+    background:var(--teal);
+    color:#fff;
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+  }
+  .cancel-btn{
+    width:100%;
+    margin-top:8px;
+    padding:12px;
+    border:none;
+    background:none;
+    color:var(--muted);
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+  }
+
+  ::-webkit-scrollbar{display:none;}
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">Saldo pessoal</p>
+  <p class="saldo" id="saldoTotal">R$ 0,00</p>
+  <div class="subrow">
+    <div><span class="dot in"></span> Entradas: <strong id="totalIn">R$ 0,00</strong></div>
+    <div><span class="dot out"></span> Saídas: <strong id="totalOut">R$ 0,00</strong></div>
+  </div>
+  <div class="header-actions">
+    <button class="ghost-btn" id="openScan">📷 Ler foto</button>
+    <button class="ghost-btn" id="openImport">📥 Importar</button>
+    <button class="ghost-btn" id="exportBtn">📤 Exportar</button>
+  </div>
+  <div class="header-actions" style="margin-top:8px;">
+    <button class="ghost-btn" id="openConfig" style="flex:none; padding:8px 16px;">⚙️ Conectar ao Drive</button>
+    <span id="syncStatus" style="font-size:11px; color:#B9CFC9; align-self:center;"></span>
+  </div>
+</header>
+
+<main>
+  <p class="section-title">Para onde foi o dinheiro</p>
+  <div class="card">
+    <div id="chartWrap"><canvas id="catChart"></canvas></div>
+    <p id="emptyChart">Nenhuma despesa registrada ainda.</p>
+    <div class="cat-legend" id="catLegend"></div>
+  </div>
+
+  <p class="section-title">Lançamentos</p>
+  <div class="card">
+    <div class="tx-list" id="txList"></div>
+    <div class="empty-state" id="emptyList" style="display:none;">
+      Nada por aqui ainda.<br>Toque em "Novo lançamento" para começar.
+    </div>
+  </div>
+</main>
+
+<button class="fab" id="openSheet">+ Novo lançamento</button>
+
+<div class="sheet-overlay" id="overlay"></div>
+<div class="sheet" id="sheet">
+  <h2>Novo lançamento</h2>
+  <div class="toggle-group">
+    <button class="toggle-btn despesa active" data-tipo="Despesa">Despesa</button>
+    <button class="toggle-btn receita" data-tipo="Receita">Receita</button>
+  </div>
+
+  <label>Descrição</label>
+  <input type="text" id="fDesc" placeholder="Ex: Uber, mercado, freela...">
+
+  <label>Valor (R$)</label>
+  <input type="number" id="fValor" placeholder="0,00" step="0.01" inputmode="decimal">
+
+  <label>Data</label>
+  <input type="date" id="fData">
+
+  <div id="catBlock">
+    <label>Categoria</label>
+    <div class="cat-grid" id="catGrid"></div>
+  </div>
+
+  <button class="save-btn" id="saveBtn">Salvar lançamento</button>
+  <button class="cancel-btn" id="cancelBtn">Cancelar</button>
+</div>
+
+<div class="sheet-overlay" id="overlayConfig"></div>
+<div class="sheet" id="sheetConfig">
+  <h2>Conectar ao Google Drive</h2>
+  <div class="import-hint">
+    Isso liga o app direto na planilha do seu Drive — cada lançamento salvo aqui
+    é escrito lá, de verdade, sem precisar exportar nem colar nada.<br><br>
+    <strong>Como pegar o link:</strong> abra a planilha "Financeiro - Base de
+    Dados (App)" → Extensões → Apps Script → cole o código da ponte → Implantar
+    como App da Web → copie a URL (termina em <code>/exec</code>).
+  </div>
+  <label>URL do Apps Script</label>
+  <input type="text" id="configUrl" placeholder="https://script.google.com/macros/s/.../exec">
+  <div class="import-status" id="configStatus"></div>
+  <button class="save-btn" id="configSaveBtn">Salvar e conectar</button>
+  <button class="cancel-btn" id="configClearBtn">Desconectar (voltar ao modo local)</button>
+  <button class="cancel-btn" id="cancelConfigBtn">Fechar</button>
+</div>
+
+<div class="sheet-overlay" id="overlayScan"></div>
+<div class="sheet" id="sheetScan">
+  <h2>Ler foto</h2>
+  <div id="scanIdle">
+    <p style="font-size:13px; color:var(--muted); margin-top:0;">
+      Tira foto ou escolhe um print de recibo/comprovante. O app lê o texto sozinho,
+      sem depender de internet ou de IA externa.
+    </p>
+    <label class="scan-file-btn" for="scanInput">
+      📷 Toque para escolher a foto<br>
+      <input type="file" id="scanInput" accept="image/*,application/pdf">
+    </label>
+    <p style="font-size:11.5px; color:var(--muted); text-align:center; margin-top:10px;">
+      Aceita foto (JPG/PNG) ou PDF de extrato
+    </p>
+  </div>
+  <div id="scanLoading" style="display:none;">
+    <img class="scan-preview" id="scanPreview">
+    <div class="scan-progress">
+      <div class="spin"></div>
+      <span id="scanProgressText">Lendo imagem...</span>
+    </div>
+  </div>
+  <div id="scanResult" style="display:none;">
+    <img class="scan-preview" id="scanPreview2">
+    <div id="scanFoundTag"></div>
+    <label>Descrição</label>
+    <input type="text" id="scanDesc" placeholder="Ex: Mercado, Uber...">
+    <label>Valor (R$)</label>
+    <input type="number" id="scanValor" step="0.01" inputmode="decimal">
+    <label>Data</label>
+    <input type="date" id="scanData">
+    <label>Tipo</label>
+    <div class="toggle-group">
+      <button class="toggle-btn despesa active" data-tipo="Despesa" id="scanTipoDespesa">Despesa</button>
+      <button class="toggle-btn receita" data-tipo="Receita" id="scanTipoReceita">Receita</button>
+    </div>
+    <div id="scanCatBlock">
+      <label>Categoria</label>
+      <div class="cat-grid" id="scanCatGrid"></div>
+    </div>
+    <button class="save-btn" id="scanSaveBtn">Confirmar e salvar</button>
+    <button class="cancel-btn" id="scanRetryBtn">Tentar outra foto</button>
+  </div>
+  <button class="cancel-btn" id="cancelScanBtn">Fechar</button>
+</div>
+
+<div class="sheet-overlay" id="overlayImport"></div>
+<div class="sheet" id="sheetImport">
+  <h2>Importar lançamentos</h2>
+  <div class="import-hint">
+    Manda o print ou PDF do extrato/recibo pro Claude no chat e peça pra extrair os dados
+    nesse formato — depois cole aqui embaixo:<br><br>
+    <code>DD/MM/AAAA | Descrição | Despesa ou Receita | Categoria | Valor</code><br><br>
+    Categorias válidas: moradia, alimentacao, transporte, saude, lazer, compras,
+    assinaturas, educacao, outros.<br>Uma linha por lançamento.
+  </div>
+  <label>Colar lançamentos</label>
+  <textarea id="importText" placeholder="02/08/2026 | Mercado Extra | Despesa | alimentacao | 187,40
+02/08/2026 | Freela edição | Receita | outros | 450,00"></textarea>
+  <div class="import-status" id="importStatus"></div>
+  <button class="save-btn" id="importSaveBtn">Importar lançamentos</button>
+  <button class="cancel-btn" id="cancelImportBtn">Cancelar</button>
+</div>
+
+<script>
+const CATS_DESPESA = [
+  {id:'moradia', nome:'Moradia', em:'🏠', cor:'#1F4B44'},
+  {id:'alimentacao', nome:'Alimentação', em:'🍽️', cor:'#C79A3D'},
+  {id:'transporte', nome:'Transporte', em:'🚗', cor:'#B4552E'},
+  {id:'saude', nome:'Saúde', em:'💊', cor:'#5B7FBF'},
+  {id:'lazer', nome:'Lazer', em:'🎬', cor:'#8B5FA8'},
+  {id:'compras', nome:'Compras', em:'🛍️', cor:'#3F7A56'},
+  {id:'assinaturas', nome:'Assinaturas', em:'📱', cor:'#9C7A4A'},
+  {id:'educacao', nome:'Educação', em:'📚', cor:'#4A8B8B'},
+  {id:'outros', nome:'Outros', em:'✨', cor:'#8A8A8A'},
+];
+const CAT_RECEITA = {id:'receita', nome:'Receita', em:'💰', cor:'#3F7A56'};
+
+let txs = [];
+let tipoAtual = 'Despesa';
+let catAtual = 'alimentacao';
+let chart = null;
+let apiUrl = null;
+
+const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbwTkeOJ-hN6MCNwfqne2hru7VJoTq4rPfBubuz7t2POxIo4xEIgkh06qH52KV-__3ux/exec';
+
+const fmt = v => 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+const fmtData = iso => {
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}`;
+};
+
+function catInfo(id){
+  return CATS_DESPESA.find(c=>c.id===id) || CAT_RECEITA;
+}
+
+function setSyncStatus(text){
+  document.getElementById('syncStatus').textContent = text;
+}
+
+async function loadApiUrl(){
+  try{
+    const res = await window.storage.get('apiUrl');
+    apiUrl = res ? res.value : DEFAULT_API_URL;
+  }catch(e){ apiUrl = DEFAULT_API_URL; }
+}
+
+async function loadTxs(){
+  await loadApiUrl();
+  if(apiUrl){
+    setSyncStatus('🔄 Sincronizando...');
+    try{
+      const res = await fetch(apiUrl);
+      const data = await res.json();
+      if(data.ok){
+        txs = data.transacoes.map(t => ({...t, valor: Number(t.valor)}));
+        setSyncStatus('✓ Conectado ao Drive');
+        render();
+        return;
+      }
+    }catch(e){
+      console.error('Erro ao sincronizar', e);
+      setSyncStatus('⚠ Sem conexão — usando cópia local');
+    }
+  }
+  // Fallback: modo local
+  try{
+    const res = await window.storage.get('transacoes');
+    txs = res ? JSON.parse(res.value) : [];
+  }catch(e){ txs = []; }
+  render();
+}
+
+async function saveTxsLocal(){
+  try{ await window.storage.set('transacoes', JSON.stringify(txs)); }
+  catch(e){ console.error('Erro ao salvar local', e); }
+}
+
+async function addTx(tx){
+  txs.push(tx);
+  await saveTxsLocal();
+  if(apiUrl){
+    try{
+      await fetch(apiUrl, {
+        method: 'POST',
+        headers: {'Content-Type': 'text/plain;charset=utf-8'},
+        body: JSON.stringify({action:'add', ...tx})
+      });
+    }catch(e){ console.error('Erro ao gravar na planilha', e); }
+  }
+  render();
+}
+
+async function deleteTx(id){
+  txs = txs.filter(t=>t.id !== id);
+  await saveTxsLocal();
+  if(apiUrl){
+    try{
+      await fetch(apiUrl, {
+        method: 'POST',
+        headers: {'Content-Type': 'text/plain;charset=utf-8'},
+        body: JSON.stringify({action:'delete', id})
+      });
+    }catch(e){ console.error('Erro ao apagar na planilha', e); }
+  }
+  render();
+}
+
+// ===== Configurações / conexão com Drive =====
+const overlayConfig = document.getElementById('overlayConfig');
+const sheetConfig = document.getElementById('sheetConfig');
+
+document.getElementById('openConfig').onclick = async () => {
+  document.getElementById('configUrl').value = apiUrl || '';
+  document.getElementById('configStatus').textContent = apiUrl ? 'Conectado.' : 'Ainda não conectado — modo local.';
+  overlayConfig.classList.add('open');
+  sheetConfig.classList.add('open');
+};
+document.getElementById('cancelConfigBtn').onclick = () => {
+  overlayConfig.classList.remove('open');
+  sheetConfig.classList.remove('open');
+};
+overlayConfig.onclick = () => {
+  overlayConfig.classList.remove('open');
+  sheetConfig.classList.remove('open');
+};
+
+document.getElementById('configSaveBtn').onclick = async () => {
+  const url = document.getElementById('configUrl').value.trim();
+  const status = document.getElementById('configStatus');
+  if(!url.startsWith('https://script.google.com/')){
+    status.textContent = 'Isso não parece uma URL de Apps Script válida.';
+    return;
+  }
+  status.textContent = 'Testando conexão...';
+  try{
+    const res = await fetch(url);
+    const data = await res.json();
+    if(data.ok){
+      await window.storage.set('apiUrl', url);
+      apiUrl = url;
+      status.textContent = '✓ Conectado! Sincronizando...';
+      await loadTxs();
+      setTimeout(() => {
+        overlayConfig.classList.remove('open');
+        sheetConfig.classList.remove('open');
+      }, 800);
+    }else{
+      status.textContent = 'A URL respondeu, mas algo está errado no script.';
+    }
+  }catch(e){
+    status.textContent = 'Não consegui conectar. Confere se o Apps Script foi implantado como "Qualquer pessoa".';
+  }
+};
+
+document.getElementById('configClearBtn').onclick = async () => {
+  try{ await window.storage.delete('apiUrl'); }catch(e){}
+  apiUrl = null;
+  setSyncStatus('');
+  await loadTxs();
+  overlayConfig.classList.remove('open');
+  sheetConfig.classList.remove('open');
+};
+
+function buildCatGrid(){
+  const grid = document.getElementById('catGrid');
+  grid.innerHTML = '';
+  CATS_DESPESA.forEach(c=>{
+    const div = document.createElement('div');
+    div.className = 'cat-opt' + (c.id===catAtual ? ' active' : '');
+    div.innerHTML = `<span class="em">${c.em}</span>${c.nome}`;
+    div.onclick = () => { catAtual = c.id; buildCatGrid(); };
+    grid.appendChild(div);
+  });
+}
+
+function render(){
+  let totalIn=0, totalOut=0;
+  const byCat = {};
+
+  txs.forEach(t=>{
+    if(t.tipo==='Receita') totalIn += t.valor;
+    else{
+      totalOut += t.valor;
+      byCat[t.categoria] = (byCat[t.categoria]||0) + t.valor;
+    }
+  });
+
+  document.getElementById('saldoTotal').textContent = fmt(totalIn-totalOut);
+  document.getElementById('totalIn').textContent = fmt(totalIn);
+  document.getElementById('totalOut').textContent = fmt(totalOut);
+
+  const catKeys = Object.keys(byCat);
+  const emptyChart = document.getElementById('emptyChart');
+  const chartWrap = document.getElementById('chartWrap');
+  const legend = document.getElementById('catLegend');
+  legend.innerHTML = '';
+
+  if(catKeys.length===0){
+    emptyChart.style.display='block';
+    chartWrap.style.display='none';
+  }else{
+    emptyChart.style.display='none';
+    chartWrap.style.display='block';
+    const labels = catKeys.map(k=>catInfo(k).nome);
+    const data = catKeys.map(k=>byCat[k]);
+    const colors = catKeys.map(k=>catInfo(k).cor);
+
+    if(chart) chart.destroy();
+    chart = new Chart(document.getElementById('catChart'), {
+      type:'doughnut',
+      data:{ labels, datasets:[{data, backgroundColor:colors, borderWidth:2, borderColor:'#FFFFFF'}]},
+      options:{
+        cutout:'68%',
+        plugins:{ legend:{display:false}, tooltip:{
+          callbacks:{ label:ctx => ctx.label+': '+fmt(ctx.parsed) }
+        }}
+      }
+    });
+
+    catKeys.sort((a,b)=>byCat[b]-byCat[a]).forEach(k=>{
+      const c = catInfo(k);
+      const chip = document.createElement('div');
+      chip.className='cat-chip';
+      chip.innerHTML = `<span class="sw" style="background:${c.cor}"></span>${c.em} ${c.nome} · ${fmt(byCat[k])}`;
+      legend.appendChild(chip);
+    });
+  }
+
+  const list = document.getElementById('txList');
+  const emptyList = document.getElementById('emptyList');
+  list.innerHTML = '';
+  if(txs.length===0){
+    emptyList.style.display='block';
+  }else{
+    emptyList.style.display='none';
+    [...txs].sort((a,b)=> b.data.localeCompare(a.data) || b.id-a.id).forEach(t=>{
+      const c = catInfo(t.categoria);
+      const row = document.createElement('div');
+      row.className='tx';
+      row.innerHTML = `
+        <div class="tx-row">
+          <div class="tx-icon" style="background:${c.cor}22; color:${c.cor}">${c.em}</div>
+          <div style="flex:1">
+            <div class="tx-desc">${t.descricao}</div>
+            <div class="tx-meta">${c.nome} · ${fmtData(t.data)}</div>
+          </div>
+          <div class="tx-val ${t.tipo==='Receita'?'in':'out'}">${t.tipo==='Receita'?'+':'−'} ${fmt(t.valor)}</div>
+          <button class="tx-del" data-id="${t.id}">×</button>
+        </div>`;
+      list.appendChild(row);
+    });
+    list.querySelectorAll('.tx-del').forEach(btn=>{
+      btn.onclick = async () => {
+        await deleteTx(Number(btn.dataset.id));
+      };
+    });
+  }
+}
+
+// Sheet controls
+const overlay = document.getElementById('overlay');
+const sheet = document.getElementById('sheet');
+
+function openSheet(){
+  document.getElementById('fData').value = new Date().toISOString().slice(0,10);
+  document.getElementById('fDesc').value = '';
+  document.getElementById('fValor').value = '';
+  tipoAtual = 'Despesa';
+  document.querySelectorAll('.toggle-btn').forEach(b=>b.classList.toggle('active', b.dataset.tipo===tipoAtual));
+  document.getElementById('catBlock').style.display = 'block';
+  buildCatGrid();
+  overlay.classList.add('open');
+  sheet.classList.add('open');
+}
+function closeSheet(){
+  overlay.classList.remove('open');
+  sheet.classList.remove('open');
+}
+
+document.getElementById('openSheet').onclick = openSheet;
+document.getElementById('cancelBtn').onclick = closeSheet;
+overlay.onclick = closeSheet;
+
+document.querySelectorAll('.toggle-btn').forEach(btn=>{
+  btn.onclick = () => {
+    tipoAtual = btn.dataset.tipo;
+    document.querySelectorAll('.toggle-btn').forEach(b=>b.classList.toggle('active', b===btn));
+    document.getElementById('catBlock').style.display = tipoAtual==='Despesa' ? 'block' : 'none';
+  };
+});
+
+document.getElementById('saveBtn').onclick = async () => {
+  const desc = document.getElementById('fDesc').value.trim();
+  const valor = parseFloat(document.getElementById('fValor').value);
+  const data = document.getElementById('fData').value;
+
+  if(!desc || !valor || valor<=0 || !data){
+    alert('Preenche descrição, valor e data pra salvar.');
+    return;
+  }
+
+  await addTx({
+    id: Date.now(),
+    tipo: tipoAtual,
+    descricao: desc,
+    valor: valor,
+    data: data,
+    categoria: tipoAtual==='Receita' ? 'receita' : catAtual
+  });
+  closeSheet();
+};
+
+// ===== PDF -> imagem =====
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+async function pdfParaImagem(file){
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+  const page = await pdf.getPage(1);
+  const viewport = page.getViewport({scale: 2.2});
+  const canvas = document.createElement('canvas');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  await page.render({canvasContext: canvas.getContext('2d'), viewport}).promise;
+  return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+}
+
+// ===== Ler foto (OCR client-side) =====
+const overlayScan = document.getElementById('overlayScan');
+const sheetScan = document.getElementById('sheetScan');
+let scanCatAtual = 'alimentacao';
+let scanTipoAtual = 'Despesa';
+
+function buildScanCatGrid(){
+  const grid = document.getElementById('scanCatGrid');
+  grid.innerHTML = '';
+  CATS_DESPESA.forEach(c=>{
+    const div = document.createElement('div');
+    div.className = 'cat-opt' + (c.id===scanCatAtual ? ' active' : '');
+    div.innerHTML = `<span class="em">${c.em}</span>${c.nome}`;
+    div.onclick = () => { scanCatAtual = c.id; buildScanCatGrid(); };
+    grid.appendChild(div);
+  });
+}
+
+function resetScanSheet(){
+  document.getElementById('scanIdle').style.display = 'block';
+  document.getElementById('scanLoading').style.display = 'none';
+  document.getElementById('scanResult').style.display = 'none';
+  document.getElementById('scanInput').value = '';
+}
+
+function openScanSheet(){
+  resetScanSheet();
+  overlayScan.classList.add('open');
+  sheetScan.classList.add('open');
+}
+function closeScanSheet(){
+  overlayScan.classList.remove('open');
+  sheetScan.classList.remove('open');
+}
+document.getElementById('openScan').onclick = openScanSheet;
+document.getElementById('cancelScanBtn').onclick = closeScanSheet;
+document.getElementById('scanRetryBtn').onclick = resetScanSheet;
+overlayScan.onclick = closeScanSheet;
+
+function extrairValor(texto){
+  // procura padrões tipo R$ 45,90 / 45.90 / 1.234,56 — pega o maior valor plausível
+  const matches = [...texto.matchAll(/(?:r\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2}|\d+,\d{2}|\d+\.\d{2})/gi)];
+  if(matches.length===0) return null;
+  const valores = matches.map(m => {
+    let v = m[1].replace(/\./g,'').replace(',', '.');
+    return parseFloat(v);
+  }).filter(v => v > 0 && v < 1000000);
+  if(valores.length===0) return null;
+  // heurística: valor "total" costuma ser o maior número da nota
+  return Math.max(...valores);
+}
+
+function extrairData(texto){
+  const m = texto.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+  if(!m) return null;
+  let [_, d, mo, y] = m;
+  if(y.length===2) y = '20'+y;
+  d = d.padStart(2,'0'); mo = mo.padStart(2,'0');
+  if(Number(d)>31 || Number(mo)>12) return null;
+  return `${y}-${mo}-${d}`;
+}
+
+function extrairDescricao(texto){
+  // pega a primeira linha "significativa" (letras, não só números/símbolos)
+  const linhas = texto.split('\n').map(l=>l.trim()).filter(Boolean);
+  const candidata = linhas.find(l => /[A-Za-zÀ-ú]{3,}/.test(l) && l.length < 40);
+  return candidata || '';
+}
+
+document.getElementById('scanInput').onchange = async (e) => {
+  let file = e.target.files[0];
+  if(!file) return;
+
+  document.getElementById('scanIdle').style.display = 'none';
+  document.getElementById('scanLoading').style.display = 'block';
+  document.getElementById('scanProgressText').textContent = 'Preparando arquivo...';
+
+  const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name||'');
+  if(isPdf){
+    try{
+      file = await pdfParaImagem(file);
+    }catch(err){
+      console.error(err);
+      document.getElementById('scanProgressText').textContent = 'Não consegui ler esse PDF. Tenta um print da tela dele.';
+      return;
+    }
+  }
+
+  const url = URL.createObjectURL(file);
+  document.getElementById('scanPreview').src = url;
+
+  try{
+    const result = await Tesseract.recognize(file, 'por', {
+      logger: m => {
+        if(m.status === 'recognizing text'){
+          document.getElementById('scanProgressText').textContent =
+            `Lendo imagem... ${Math.round(m.progress*100)}%`;
+        }
+      }
+    });
+    const texto = result.data.text;
+
+    const valor = extrairValor(texto);
+    const data = extrairData(texto);
+    const desc = extrairDescricao(texto);
+
+    document.getElementById('scanPreview2').src = url;
+    document.getElementById('scanDesc').value = desc;
+    document.getElementById('scanValor').value = valor || '';
+    document.getElementById('scanData').value = data || new Date().toISOString().slice(0,10);
+
+    const tag = document.getElementById('scanFoundTag');
+    if(valor || data){
+      tag.innerHTML = `<div class="found-tag">✓ ${valor ? 'Valor encontrado' : ''}${valor && data ? ' · ' : ''}${data ? 'Data encontrada' : ''}</div>`;
+    }else{
+      tag.innerHTML = `<div class="found-tag" style="background:#FBEBE2; color:var(--coral)">⚠ Não achei valor/data automático — preenche na mão</div>`;
+    }
+
+    scanTipoAtual = 'Despesa';
+    document.getElementById('scanTipoDespesa').classList.add('active');
+    document.getElementById('scanTipoReceita').classList.remove('active');
+    document.getElementById('scanCatBlock').style.display = 'block';
+    buildScanCatGrid();
+
+    document.getElementById('scanLoading').style.display = 'none';
+    document.getElementById('scanResult').style.display = 'block';
+  }catch(err){
+    console.error(err);
+    document.getElementById('scanProgressText').textContent = 'Erro ao ler a imagem. Tenta de novo.';
+  }
+};
+
+document.getElementById('scanTipoDespesa').onclick = () => {
+  scanTipoAtual = 'Despesa';
+  document.getElementById('scanTipoDespesa').classList.add('active');
+  document.getElementById('scanTipoReceita').classList.remove('active');
+  document.getElementById('scanCatBlock').style.display = 'block';
+};
+document.getElementById('scanTipoReceita').onclick = () => {
+  scanTipoAtual = 'Receita';
+  document.getElementById('scanTipoReceita').classList.add('active');
+  document.getElementById('scanTipoDespesa').classList.remove('active');
+  document.getElementById('scanCatBlock').style.display = 'none';
+};
+
+document.getElementById('scanSaveBtn').onclick = async () => {
+  const desc = document.getElementById('scanDesc').value.trim();
+  const valor = parseFloat(document.getElementById('scanValor').value);
+  const data = document.getElementById('scanData').value;
+
+  if(!desc || !valor || valor<=0 || !data){
+    alert('Confere descrição, valor e data antes de salvar.');
+    return;
+  }
+
+  await addTx({
+    id: Date.now(),
+    tipo: scanTipoAtual,
+    descricao: desc,
+    valor: valor,
+    data: data,
+    categoria: scanTipoAtual==='Receita' ? 'receita' : scanCatAtual
+  });
+  closeScanSheet();
+};
+
+// ===== Exportar =====
+document.getElementById('exportBtn').onclick = () => {
+  if(txs.length===0){ alert('Nenhum lançamento pra exportar ainda.'); return; }
+  let csv = 'Data,Descricao,Tipo,Categoria,Valor\n';
+  [...txs].sort((a,b)=>a.data.localeCompare(b.data)).forEach(t=>{
+    const desc = t.descricao.replace(/"/g,'""');
+    csv += `${t.data},"${desc}",${t.tipo},${catInfo(t.categoria).nome},${t.valor.toFixed(2)}\n`;
+  });
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `financeiro_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+// ===== Importar =====
+const overlayImport = document.getElementById('overlayImport');
+const sheetImport = document.getElementById('sheetImport');
+
+function openImportSheet(){
+  document.getElementById('importText').value = '';
+  document.getElementById('importStatus').textContent = '';
+  overlayImport.classList.add('open');
+  sheetImport.classList.add('open');
+}
+function closeImportSheet(){
+  overlayImport.classList.remove('open');
+  sheetImport.classList.remove('open');
+}
+document.getElementById('openImport').onclick = openImportSheet;
+document.getElementById('cancelImportBtn').onclick = closeImportSheet;
+overlayImport.onclick = closeImportSheet;
+
+const CAT_IDS = CATS_DESPESA.map(c=>c.id);
+
+function parseImportLine(line){
+  const parts = line.split('|').map(p=>p.trim());
+  if(parts.length < 4) return null;
+
+  const [dataRaw, descricao, tipoRaw, ...rest] = parts;
+  const m = dataRaw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(!m || !descricao) return null;
+  const data = `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+
+  const tipo = /receita/i.test(tipoRaw) ? 'Receita' : 'Despesa';
+
+  let categoria = 'outros';
+  let valorStr;
+  if(tipo === 'Receita'){
+    categoria = 'receita';
+    valorStr = rest[rest.length-1] || rest[0];
+  }else{
+    const catRaw = (rest[0]||'outros').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    categoria = CAT_IDS.includes(catRaw) ? catRaw : 'outros';
+    valorStr = rest[1] || rest[0];
+  }
+  if(!valorStr) return null;
+  const valor = parseFloat(valorStr.replace(/[^\d,.-]/g,'').replace(',','.'));
+  if(!valor || valor<=0) return null;
+
+  return { id: Date.now()+Math.floor(Math.random()*10000), tipo, descricao, valor, data, categoria };
+}
+
+document.getElementById('importSaveBtn').onclick = async () => {
+  const raw = document.getElementById('importText').value.trim();
+  const status = document.getElementById('importStatus');
+  if(!raw){ status.textContent = 'Cola os lançamentos antes de importar.'; return; }
+
+  const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  const novos = [];
+  let falhas = 0;
+  lines.forEach(l=>{
+    const parsed = parseImportLine(l);
+    if(parsed) novos.push(parsed);
+    else falhas++;
+  });
+
+  if(novos.length===0){
+    status.textContent = 'Nenhuma linha reconhecida. Confere o formato: DD/MM/AAAA | Descrição | Tipo | Categoria | Valor';
+    return;
+  }
+
+  txs = txs.concat(novos);
+  await saveTxsLocal();
+  if(apiUrl){
+    for(const tx of novos){
+      try{
+        await fetch(apiUrl, {
+          method: 'POST',
+          headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({action:'add', ...tx})
+        });
+      }catch(e){ console.error(e); }
+    }
+  }
+  render();
+  status.textContent = `${novos.length} lançamento(s) importado(s)${falhas ? `, ${falhas} linha(s) ignorada(s)` : ''}.`;
+  setTimeout(closeImportSheet, 1200);
+};
+
+loadTxs();
+</script>
+</body>
+</html>

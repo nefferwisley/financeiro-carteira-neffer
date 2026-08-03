@@ -1,0 +1,150 @@
+╔══════════════════════════════════════════════════════════════════╗
+║           CARTEIRA — PLANO DE AÇÃO COWORK                       ║
+║     Deploy Vercel em 3 Fases (15 minutos no total)              ║
+╚══════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 FASE 1: PREPARAÇÃO (2 min)
+
+□ Baixa os arquivos da pasta "financeiro-vercel"
+  → Vai em /mnt/user-data/outputs/financeiro-vercel
+  → Clica em qualquer arquivo → "Download"
+  → Extract no seu PC (Downloads ou onde preferir)
+
+□ Abre terminal NA PASTA dos arquivos
+  Windows: Clica direito na pasta vazia → "PowerShell aqui"
+  Mac: Clica direito → "New Terminal at Folder"
+  Linux: Clica direito → "Open Terminal Here"
+
+□ Entra na pasta
+  $ cd financeiro-vercel
+
+□ Verifica que tá tudo
+  $ ls
+  (Deve aparecer: index.html, vercel.json, package.json, etc)
+
+STATUS: ✅ Arquivos prontos na máquina
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 FASE 2: GITHUB (4 min)
+
+□ Cria repo novo
+  → https://github.com/new
+  
+  Preenche:
+  - Nome: financeiro-carteira
+  - Descrição: Controle financeiro com OCR de recibos
+  - Público: ✓
+  - Initialize: deixa desmarcado
+  
+  → Clica "Create repository"
+
+□ Volta no terminal e roda estes comandos (um por um):
+
+  $ git init
+
+  $ git add .
+
+  $ git commit -m "Initial commit: Carteira financeiro"
+
+  $ git branch -M main
+
+□ Vai em GitHub, clica "<> Code" (botão verde)
+  → Copia a URL (tipo: https://github.com/SEU-USER/financeiro-carteira.git)
+
+□ Volta no terminal e cola:
+
+  $ git remote add origin [COLA-A-URL-AQUI]
+
+□ Final:
+
+  $ git push -u origin main
+  
+  (Pode pedir senha/token — preenche e pronto)
+
+STATUS: ✅ Código no GitHub
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 FASE 3: VERCEL (8 min)
+
+□ Vai em: https://vercel.com
+
+□ Loga (com GitHub é mais fácil)
+
+□ Clica "Add New" → "Project"
+
+□ Seleciona "financeiro-carteira" (vai aparecer lá)
+
+□ Clica "Import"
+
+□ Vercel detecta tudo automático (vercel.json)
+
+□ Clica "Deploy" (botão grande lá embaixo)
+
+□ Espera 1-2 minutos...
+
+□ Pronto! URL aparece:
+  
+  https://financeiro-carteira.vercel.app
+  
+  Clica e testa!
+
+STATUS: ✅ Site LIVE na internet!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 RESULTADO FINAL:
+
+✓ App rodando 24/7 na nuvem
+✓ URL pública que funciona de qualquer lugar
+✓ Domínio automático (.vercel.app)
+✓ HTTPS automático
+✓ CI/CD automático (cada push = novo deploy)
+✓ Uptime 99.9%
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚡ COMANDOS RÁPIDOS (Copiar-Colar)
+
+No terminal (fase 2):
+
+git init
+git add .
+git commit -m "Initial commit: Carteira financeiro"
+git branch -M main
+git remote add origin https://github.com/SEU-USER/financeiro-carteira.git
+git push -u origin main
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📚 DOCUMENTAÇÃO COMPLETA
+
+✓ COWORK_CONTEXT.md   ← Lê isso no Cowork!
+✓ DEPLOYMENT.md       ← Detalhado com tudo
+✓ README.md           ← Overview do projeto
+✓ QUICK_START.txt     ← Cheatsheet
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❓ FAQ RÁPIDO
+
+P: E se der erro no terminal?
+R: Lê COWORK_CONTEXT.md → "⚠️ Erros Comuns e Soluções"
+
+P: Como atualizar depois?
+R: git add . → git commit -m "mensagem" → git push
+   Vercel faz deploy automático em 1 min
+
+P: Dados onde ficam?
+R: No navegador (IndexedDB) — seu PC não precisa estar ligado
+
+P: Pode usar domínio custom?
+R: Sim, depois no Vercel → Settings → Domains
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 BORA! Começa pela FASE 1 e avança. Qualquer dúvida é só chamar.
+
